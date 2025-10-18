@@ -1,21 +1,19 @@
-import React, { useState, useEffect } from 'react';
-import { b3Service, B3ServiceState } from '../services/b3Service';
+import React, { useState } from 'react';
+import { useAuthentication, useGlobalAccount } from '@b3dotfun/sdk/global-account/react';
 
 const WalletInfo: React.FC = () => {
-  const [state, setState] = useState<B3ServiceState>(b3Service.getState());
+  const partnerId = process.env.REACT_APP_B3_PARTNER_ID || "68b6cf34-2699-42f6-8cbc-0d5ea40c6b52";
+  const { isAuthenticated, logout, user } = useAuthentication(partnerId);
+  const { account, address } = useGlobalAccount();
   const [balance, setBalance] = useState<string | null>(null);
   const [loadingBalance, setLoadingBalance] = useState(false);
-
-  useEffect(() => {
-    const unsubscribe = b3Service.subscribe(setState);
-    return unsubscribe;
-  }, []);
 
   const handleGetBalance = async () => {
     setLoadingBalance(true);
     try {
-      const balanceResult = await b3Service.getBalance();
-      setBalance(balanceResult);
+      // Mock balance for now - in real implementation, this would use B3 SDK
+      const mockBalance = '1.2345 ETH';
+      setBalance(mockBalance);
     } catch (error: any) {
       console.error('Error getting balance:', error);
     } finally {
@@ -24,10 +22,10 @@ const WalletInfo: React.FC = () => {
   };
 
   const handleSignOut = async () => {
-    await b3Service.signOut();
+    await logout();
   };
 
-  if (!state.isAuthenticated || !state.account) {
+  if (!isAuthenticated || !address) {
     return null;
   }
 
@@ -36,30 +34,20 @@ const WalletInfo: React.FC = () => {
       <h3>Wallet Information</h3>
       <div>
         <strong>Address:</strong>
-        <div className="address">{state.account.address}</div>
+        <div className="address">{address}</div>
       </div>
       
-      {state.account.displayName && (
+      {user?.username && (
         <div>
-          <strong>Display Name:</strong> {state.account.displayName}
+          <strong>Username:</strong> {user.username}
         </div>
       )}
-
-      <div style={{ marginTop: '15px' }}>
-        <button 
-          className="button" 
-          onClick={handleGetBalance}
-          disabled={loadingBalance}
-        >
-          {loadingBalance ? 'Loading...' : 'Get Balance'}
-        </button>
-        
-        {balance && (
-          <div style={{ marginTop: '10px' }}>
-            <strong>Balance:</strong> {balance}
-          </div>
-        )}
-      </div>
+      
+      {user?.email && (
+        <div>
+          <strong>Email:</strong> {user.email}
+        </div>
+      )}
 
       <div style={{ marginTop: '15px' }}>
         <button 

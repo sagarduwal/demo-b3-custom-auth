@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
-import { b3Service } from '../services/b3Service';
+import { useAuthentication } from '@b3dotfun/sdk/global-account/react';
 
 const MessageSigner: React.FC = () => {
+  const partnerId = process.env.REACT_APP_B3_PARTNER_ID || "68b6cf34-2699-42f6-8cbc-0d5ea40c6b52";
+  const { isAuthenticated } = useAuthentication(partnerId);
   const [message, setMessage] = useState('');
   const [signature, setSignature] = useState<string | null>(null);
   const [isSigning, setIsSigning] = useState(false);
@@ -12,10 +14,16 @@ const MessageSigner: React.FC = () => {
       return;
     }
 
+    if (!isAuthenticated) {
+      alert('Please authenticate first');
+      return;
+    }
+
     try {
       setIsSigning(true);
-      const result = await b3Service.signMessage(message);
-      setSignature(result);
+      // Mock signature for now - in real implementation, this would use B3 SDK
+      const mockSignature = `0x${Buffer.from(`signed:${message}`).toString('hex')}`;
+      setSignature(mockSignature);
     } catch (error: any) {
       console.error('Error signing message:', error);
       alert('Failed to sign message: ' + error.message);

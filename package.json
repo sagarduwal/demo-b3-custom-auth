@@ -4,24 +4,35 @@
   "private": true,
   "description": "Minimal PoC for B3 chain authentication with custom Google OAuth",
   "dependencies": {
-    "@b3dotfun/sdk": "0.0.49",
+    "@b3dotfun/sdk": "^0.0.52",
+    "@privy-io/react-auth": "^3.3.0",
     "@react-oauth/google": "^0.12.2",
+    "@tanstack/react-query": "^5.90.5",
     "axios": "^1.6.0",
+    "buffer": "^6.0.3",
+    "crypto-browserify": "^3.12.1",
+    "process": "^0.11.10",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-scripts": "5.0.1",
-    "typescript": "^5.0.0"
+    "stream-browserify": "^3.0.0",
+    "thirdweb": "^5.109.0",
+    "typescript": "^5.0.0",
+    "util": "^0.12.5",
+    "viem": "^2.38.3",
+    "wagmi": "^2.18.1"
   },
   "devDependencies": {
+    "@craco/craco": "^7.1.0",
     "@types/node": "^16.18.0",
     "@types/react": "^18.2.0",
     "@types/react-dom": "^18.2.0"
   },
   "scripts": {
-    "start": "react-scripts start",
-    "start:limited": "WATCHPACK_POLLING=true react-scripts start",
-    "build": "react-scripts build",
-    "test": "react-scripts test",
+    "start": "craco start",
+    "start:limited": "WATCHPACK_POLLING=true craco start",
+    "build": "craco build",
+    "test": "craco test",
     "eject": "react-scripts eject"
   },
   "eslintConfig": {

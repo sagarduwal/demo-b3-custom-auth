@@ -3,7 +3,6 @@ import { useAuthentication, useGlobalAccount, B3Provider, SignInWithB3, useB3, B
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import WalletInfo from './components/WalletInfo';
 import MessageSigner from './components/MessageSigner';
-import ContractInteraction from './components/ContractInteraction';
 import { b3Chain } from './constants/b3Chain';
 import { Account } from "thirdweb/wallets";
 import { authService } from './services/authService';

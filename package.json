@@ -4,7 +4,7 @@
   "private": true,
   "description": "Minimal PoC for B3 chain authentication with custom Google OAuth",
   "dependencies": {
-    "@b3dotfun/sdk": "^0.0.52",
+    "@b3dotfun/sdk": "^0.0.55",
     "@privy-io/react-auth": "^3.3.0",
     "@react-oauth/google": "^0.12.2",
     "@tanstack/react-query": "^5.90.5",

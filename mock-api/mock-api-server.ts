@@ -44,41 +44,44 @@ app.post('/api/v3/auth/verify-b3-token', async (req, res) => {
     }
 
     const b3Data = await b3Response.json();
-    console.log('B3 API authentication successful', {status: b3Response.status, data: b3Data});
-
-    const userId = b3Data.user?.id || b3Data.account?.address;
-    const b3Address = b3Data.account?.address;
-    const b3ChainId = b3Data.account?.chainId;
-    const email = b3Data.user?.email;
-    const name = b3Data.user?.name || b3Data.user?.displayName;
-
-    if (b3Address && (!b3Address.startsWith('0x') || b3Address.length !== 42)) {
+    const { user } = b3Data;
+    
+    const privyAccounts = user?.privyLinkedAccounts || [];
+    const googleAccount = privyAccounts.find((a: any) => a.type === 'google_oauth');
+    const ethereumWallet = privyAccounts.find((a: any) => a.type === 'wallet' && a.chain_type === 'ethereum');
+    const solanaWallet = privyAccounts.find((a: any) => a.type === 'wallet' && a.chain_type === 'solana');
+    const googleProfile = user?.twProfiles?.find((p: any) => p.type === 'google');
+    
+    const email = googleAccount?.email || googleProfile?.details?.email || user?.email;
+    const name = googleAccount?.name || googleProfile?.details?.name || user?.name || user?.displayName;
+    const picture = googleProfile?.details?.picture || user?.picture;
+    
+    if (ethereumWallet?.address && (!ethereumWallet.address.startsWith('0x') || ethereumWallet.address.length !== 42)) {
       return res.status(400).json({
         success: false,
-        error: 'Invalid wallet address format',
-        message: 'B3 account address must be a valid Ethereum address'
+        error: 'Invalid Ethereum wallet address format',
+        message: 'Ethereum wallet address must be a valid Ethereum address'
       });
     }
 
     console.log('B3 API verification successful for user:', name);
-    console.log('B3 Address:', b3Address);
-    console.log('B3 Chain ID:', b3ChainId);
+    console.log('Email:', email);
+    console.log('Smart Account Address:', user?.smartAccountAddress);
+    console.log('Ethereum Wallet:', ethereumWallet?.address);
+    console.log('Solana Wallet:', solanaWallet?.address);
 
     res.status(200).json({
       success: true,
       verified: true,
-      user_info: {
-        id: userId,
-        email: email,
-        name: name,
-        picture: b3Data.user?.picture,
-        b3_address: b3Address,
-        b3_chain_id: b3ChainId
-      },
-      b3_api_response: {
-        user: b3Data.user,
-        account: b3Data.account,
-        authenticated_at: new Date().toISOString()
+      user: {
+        id: user?.userId || user?._id,
+        email,
+        name,
+        picture,
+        smart_account_address: user?.smartAccountAddress,
+        ethereum_wallet: ethereumWallet?.address,
+        solana_wallet: solanaWallet?.address,
+        created_at: user?.createdAt
       }
     });
 

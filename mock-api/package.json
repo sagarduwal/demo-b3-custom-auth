@@ -12,7 +12,7 @@
   "dependencies": {
     "express": "^4.18.0",
     "cors": "^2.8.5",
-    "@b3dotfun/sdk": "^0.0.52"
+    "@b3dotfun/sdk": "^0.0.55"
   },
   "devDependencies": {
     "@types/express": "^4.17.0",

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { useAuthentication, useGlobalAccount, B3Provider, SignInWithB3, useB3, B3DynamicModal } from '@b3dotfun/sdk/global-account/react';
+import { B3Provider, SignInWithB3, useB3, B3DynamicModal } from '@b3dotfun/sdk/global-account/react';
+import { getAuthToken } from '@b3dotfun/sdk/shared/utils/auth-token';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import WalletInfo from './components/WalletInfo';
 import MessageSigner from './components/MessageSigner';
@@ -18,28 +19,18 @@ declare global {
 
 function App() {
   const [account, setAccount] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const connectToWallet = async () => {
       if (typeof window.ethereum !== "undefined") {
         try {
-          // Request account access
           const accounts = await window.ethereum.request({ method: "eth_requestAccounts" });
           setAccount(accounts[0]);
 
-          // Listen for account changes
-          const handleAccountsChanged = (accounts: string[]) => {
+          window.ethereum.on("accountsChanged", (accounts: string[]) => {
             setAccount(accounts[0]);
-          };
-
-          window.ethereum.on("accountsChanged", handleAccountsChanged);
-
-          return () => {
-            // Clean up listeners when component unmounts
-            if (window.ethereum) {
-              window.ethereum.removeListener("accountsChanged", handleAccountsChanged);
-            }
-          };
+          });
         } catch (error) {
           console.error("Error connecting to wallet:", error);
         }
@@ -72,59 +63,43 @@ function App() {
         automaticallySetFirstEoa={true}
       >
         <B3DynamicModal />
-        <InnerComponent account={account} />
+        <InnerComponent account={account} error={error} setError={setError} />
       </B3Provider>
     </QueryClientProvider>
   );
 }
 
-const InnerComponent = ({ account }: { account: string }) => {
+const InnerComponent = ({ account, error, setError }: { account: string; error: string | null; setError: (error: string | null) => void }) => {
   const { account: b3Account } = useB3();
-  const [error, setError] = useState<string | null>(null);
 
-  console.log("b3Account", b3Account);
-  console.log("account (sessionKeyAddress)", account);
-
-  const handleLoginSuccess = async (globalAccount: any) => {
+  const handleLoginSuccess = async (globalAccount: Account) => {
+    console.log("User authenticated with Global Account!", globalAccount);
     setError(null);
-    console.log('B3 authentication successful:', globalAccount);
     
     try {
-      // Extract JWT token from B3 globalAccount
-      const b3JWT = globalAccount.accessToken || globalAccount.token;
-      
-      if (!b3JWT) {
-        console.error('No JWT token found in B3 globalAccount');
-        setError('B3 authentication succeeded but no JWT token was provided');
-        return;
-      }
+      const b3Jwt = getAuthToken();
+      if (b3Jwt) {
+        console.log('B3 JWT token received:', b3Jwt.substring(0, 50) + '...');
 
-      console.log('B3 JWT token extracted:', b3JWT.substring(0, 50) + '...');
-
-      // Verify B3 JWT with our backend
-      const authResult = await authService.verifyB3JWT(b3JWT);
-      
-      if (authResult.success) {
-        console.log('Backend verification successful!');
-        console.log('User data:', authResult.user);
-        console.log('B3 claims:', authResult.b3Claims);
-        console.log('Wallet info:', authResult.wallet);
+        const authResult = await authService.verifyB3JWT(b3Jwt);
+        
+        if (authResult.success) {
+          console.log('Backend verification successful!');
+          console.log('User data:', authResult.user);
+          console.log('B3 claims:', authResult.b3Claims);
+          console.log('Wallet info:', authResult.wallet);
+        } else {
+          console.error('Backend verification failed:', authResult.error);
+          setError(authResult.error || 'Backend verification failed');
+        }
       } else {
-        console.error('Backend verification failed:', authResult.error);
-        setError(authResult.error || 'Backend verification failed');
+        console.error('No JWT token found in cookies');
+        setError('No JWT token found in cookies');
       }
     } catch (error: any) {
       console.error('Error processing B3 authentication:', error);
       setError(error.message || 'Error processing B3 authentication');
     }
-  };
-
-  const handleLoginError = (errorMessage: string) => {
-    setError(errorMessage);
-  };
-
-  const handleErrorDismiss = () => {
-    setError(null);
   };
 
   return (
@@ -138,7 +113,7 @@ const InnerComponent = ({ account }: { account: string }) => {
         <div className="error">
           {error}
           <button 
-            onClick={handleErrorDismiss}
+            onClick={() => setError(null)}
             style={{ float: 'right', background: 'none', border: 'none', color: 'inherit', cursor: 'pointer' }}
           >
             ×
@@ -154,10 +129,7 @@ const InnerComponent = ({ account }: { account: string }) => {
               chain={b3Chain}
               partnerId={process.env.REACT_APP_B3_PARTNER_ID || "68b6cf34-2699-42f6-8cbc-0d5ea40c6b52"}
               sessionKeyAddress={account as `0x${string}`}
-              onLoginSuccess={(globalAccount: Account) => {
-                console.log("User authenticated with Global Account!", globalAccount);
-                handleLoginSuccess(globalAccount);
-              }}
+              onLoginSuccess={handleLoginSuccess}
             />
 
         </div>
